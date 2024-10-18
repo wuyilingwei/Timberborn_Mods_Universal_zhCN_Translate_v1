@@ -2,6 +2,10 @@
 
 This project provides Chinese support for Timberborn's creative workshop mod.
 
+Translated by Rosmontis Translation Team
+
+@武乙凌薇 @Akinare(bilibili:孑然妄想)
+
 It uses a hybrid model of AI and manual work, with AI responsible for providing translation support as quickly as possible and reducing workload, and manual work for proofreading and modification.
 
 We are not responsible for the accuracy of the translated text.
