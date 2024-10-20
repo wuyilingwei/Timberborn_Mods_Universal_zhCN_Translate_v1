@@ -1,9 +1,2 @@
-
-/steamcmd/logs
-/steamcmd/appcache
-/steamcmd/userdata
-/steamcmd/depotcache
-/steamcmd/.crash
-/steamcmd/*.delete
-/steamcmd/*.old
-/steamcmd/script.txt
+/steamcmd
+/secrets
