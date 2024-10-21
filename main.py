@@ -2,6 +2,8 @@ import openai
 import configparser
 import os
 import subprocess
+import shutil
+import hashlib
 
 # load config from secret.ini
 secret = configparser.ConfigParser()
@@ -30,3 +32,23 @@ with open(order_file_path, 'w') as steamorder:
 
 subprocess.run(['steamcmd/steamcmd.exe', '+runscript', 'steamorder.txt'], cwd='steamcmd')
 
+steam_workshop_dir = os.path.join(current_dir, 'steamcmd', 'steamapps', 'workshop', 'content', '1062090')
+
+data_dir = os.path.join(current_dir, 'data')
+if not os.path.exists(data_dir):
+    os.mkdir(data_dir)
+translated_dir = os.path.join(data_dir, 'mods')
+temp_dir = os.path.join(data_dir, 'temp')
+if os.path.exists(temp_dir):
+    is_temp_available = True
+last_dir = os.path.join(data_dir, 'last')
+
+idlist.remove('3346918947')
+if os.path.exists(translated_dir):
+    shutil.rmtree(translated_dir)
+    shutil.move(os.path.join(steam_workshop_dir, '3346918947'), translated_dir)
+
+exist_csv = open(os.path.join(translated_dir, 'Localizations', 'zhCN.csv'), 'r')
+
+for id in idlist:
+    shutil.move(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(temp_dir, id, 'enUS.csv'))
