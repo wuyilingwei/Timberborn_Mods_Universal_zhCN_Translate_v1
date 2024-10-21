@@ -1,0 +1,9 @@
+config loaded
+api_key length: 7
+steam_username: wuyilingwei
+idlist loaded
+idlist: ['3346918947', '3275060459']
+dir setup
+translated_dir: F:\Development\Timberborn_Mods_Universal_cnZH_Translate\data\mod
+temp_dir: F:\Development\Timberborn_Mods_Universal_cnZH_Translate\data\temp
+last_dir: F:\Development\Timberborn_Mods_Universal_cnZH_Translate\data\last

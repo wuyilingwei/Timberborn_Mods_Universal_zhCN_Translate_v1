@@ -1,4 +1,6 @@
 /steamcmd
 /data
+/test
 secret.ini
-test.py
+test.*
+*.log
