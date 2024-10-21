@@ -3,10 +3,10 @@ title Initializator
 
 echo [Init info] Initializator started
 
-echo [Init info] Initializate Python Openai Lib
-pip install openai
+echo [Init info] Initializate Python Libs
+pip install -r requirements.txt
 if %errorlevel% neq 0 (
-    echo [Init error] Error while installing Openai Lib
+    echo [Init error] Error while installing Libs
     echo [Init info] You must installed python 3.6 or higher
     echo [Init info] Initializator will close in 5 seconds.
     timeout /t 5 /nobreak >nul
@@ -43,12 +43,14 @@ timeout /t 5 /nobreak >nul
 steamcmd +login %steam_username% +quit
 
 cd ..
-mkdir secrets
-attrib +h secrets
-echo %openai_key% > secrets/openai_key.txt
-echo %steam_username% > secrets/steam_username.txt
+echo [Openai] > secret.ini
+echo api_key=%openai% >> secret.ini
+echo . >> secret.ini
+echo [Steam] >> secret.ini
+echo username=%steam_username% >> secret.ini
+echo paasword=NoUsed >> secret.ini
 echo [Init info] Secrets set
-echo [Init info] Never share your secrets folder and steamcmd folder with anyone
+echo [Init info] Never share your secret.ini and steamcmd folder with anyone
 
 echo [Init info] Initializator will close in 5 seconds.
 timeout /t 5 /nobreak >nul
