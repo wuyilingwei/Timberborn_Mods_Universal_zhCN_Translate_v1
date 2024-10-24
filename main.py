@@ -9,20 +9,26 @@ import time
 
 timestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
 log = open(f'{timestamp}.log', 'w', encoding='utf-8')
-log.write("Warning: This log file contains sensitive information, please keep it safe.\n")
+def log_write(msg: str) -> None:
+    logtimestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
+    print(f'{logtimestamp}: {msg}')
+    log.write(f'{logtimestamp}: {msg}\n')
+
+log_write("Warning: This log file contains sensitive information, please keep it safe.\n")
 
 # load config from secret.ini
 secret = configparser.ConfigParser()
 if not os.path.exists('secret.ini'):
-    log.write('secret.ini not found\n')
+    log_write('secret.ini not found')
+    log.close()
     exit(1)
 secret.read('secret.ini')
 
 openai.api_key = secret['Openai']['api_key']
 steam_username = secret['Steam']['username']
-log.write('config loaded\n')
-log.write(f'api_key length: {len(openai.api_key)}\n')
-log.write(f'steam_username: {steam_username}\n')
+log_write('config loaded')
+log_write(f'api_key length: {len(openai.api_key)}')
+log_write(f'steam_username: {steam_username}')
 
 # load steamcmd order
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,36 +47,35 @@ with open(order_file_path, 'w') as steamorder:
             steamorder.write(f'workshop_download_item 1062090 {id.strip()}\n')
             idlist.append(id.strip())
     steamorder.write('quit\n')
-log.write('idlist loaded\n')
-log.write(f'idlist: {idlist}\n')
+log_write('idlist loaded')
+log_write(f'idlist: {idlist}')
 
 subprocess.run(['steamcmd/steamcmd.exe', '+runscript', 'steamorder.txt'], cwd='steamcmd')
 
 steam_workshop_dir = os.path.join(current_dir, 'steamcmd', 'steamapps', 'workshop', 'content', '1062090')
 
-data_dir = os.path.join(current_dir, 'data')
-if not os.path.exists(data_dir):
-    os.mkdir(data_dir)
-translated_dir = os.path.join(data_dir, 'mod')
-temp_dir = os.path.join(data_dir, 'temp')
-if os.path.exists(temp_dir):
-    is_temp_available = True
-else:
-    is_temp_available = False
-    os.mkdir(temp_dir)
-last_dir = os.path.join(data_dir, 'last')
-log.write('dir setup\n')
-log.write(f'translated_dir: {translated_dir}\n')
-log.write(f'temp_dir: {temp_dir}\n')
-log.write(f'last_dir: {last_dir}\n')
+mod_dir = os.path.join(current_dir, 'mod')
+if not os.path.exists(mod_dir):
+    os.mkdir(mod_dir)
+main_csv_path = os.path.join(mod_dir, 'Localizations', 'zhCN.csv')
+raw_csv_dir = os.path.join(mod_dir,'data', 'enUS')
+translated_dir = os.path.join(mod_dir,'data', 'zhCN')
+temp_dir = os.path.join(current_dir, 'temp')
+log_write('dir setup')
+log_write(f'current_dir: {current_dir}')
+log_write(f'mod_dir: {mod_dir}')
+log_write(f'main_csv_path: {main_csv_path}')
+log_write(f'raw_csv_dir: {raw_csv_dir}')
+log_write(f'translated_dir: {translated_dir}')
+log_write(f'temp_dir: {temp_dir}')
 
 idlist.remove('3346918947')
-if os.path.exists(translated_dir):
-    shutil.rmtree(translated_dir)
-shutil.move(os.path.join(steam_workshop_dir, '3346918947'), translated_dir)
-
-exist_csv = open(os.path.join(translated_dir, 'Localizations', 'zhCN.csv'), 'r')
-csv_edit = csv.reader(exist_csv)
+if os.path.exists(mod_dir):
+    shutil.rmtree(mod_dir)
+shutil.move(os.path.join(steam_workshop_dir, '3346918947'), mod_dir)
 
 for id in idlist:
-    shutil.move(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(temp_dir, f"{id}.csv"))
+    shutil.move(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(raw_csv_dir, f"{id}.csv"))
+
+
+log.close()
