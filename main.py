@@ -75,7 +75,31 @@ if os.path.exists(mod_dir):
 shutil.move(os.path.join(steam_workshop_dir, '3346918947'), mod_dir)
 
 for id in idlist:
-    shutil.move(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(raw_csv_dir, f"{id}.csv"))
+    if not os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations')):
+        log_write(f'ERROR: {id} Localizations dir not found')
+        continue
+    if os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv')):
+        shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(raw_csv_dir, f"{id}.csv"))
+        log_write(f'FOUND: {id} enUS.csv found, copied to {id}.csv')
+        continue
+    if os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.txt')):
+        shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.txt'), os.path.join(raw_csv_dir, f"{id}.csv"))
+        log_write(f'FOUND: {id} enUS.txt found, copied to {id}.csv')
+        continue
+    # 尝试匹配以en开头的文件，妈的就不能统一命名吗
+    for file in os.listdir(os.path.join(steam_workshop_dir, id, 'Localizations')):
+        if "en" in file and (file.endswith('.csv') or file.endswith('.txt')):
+            # 尝试检查文件头部是否是csv
+            with open(os.path.join(steam_workshop_dir, id, 'Localizations', file), 'r', encoding='utf-8') as f:
+                firstline = f.readline().strip()
+                log_write(f'Debug: CSV style match Test {id} {file} firstline: {firstline}')
+                if 'ID,' in firstline:
+                    shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', file), os.path.join(raw_csv_dir, f"{id}.csv"))
+                    log_write(f'FOUND: {id} not exist class file, {file} matched, copied to {id}.csv')
+                    break
+    else:
+        log_write(f'ERROR: {id} enUS.csv not found, and no matching file found')
+
 
 
 log.close()
