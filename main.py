@@ -8,12 +8,21 @@ import json
 import time
 
 timestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'{timestamp}.log')
+if not os.path.exists(os.path.dirname(os.path.abspath(__file__)) + '/logs'):
+    os.makedirs(os.path.dirname(os.path.abspath(__file__)) + '/logs')
 
 def log_write(msg: str) -> None:
-    with open(f'{timestamp}.log', 'a', encoding='utf-8') as log:
+    with open(log_dir, 'a', encoding='utf-8') as log:
         logtimestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
         print(f'{logtimestamp}: {msg}')
         log.write(f'{logtimestamp}: {msg}\n')
+
+if os.path.exists('changes.log'):
+    os.remove('changes.log')
+def change_write(msg: str) -> None:
+    with open("changes.log", 'a', encoding='utf-8') as change_log:
+        change_log.write(f'{msg}\n')
 
 log_write("Warning: This log file contains sensitive information, please keep it safe.\n")
 
@@ -254,8 +263,10 @@ for id in idlist:
                                     log_write(f'Matched translated found: {id} {raw_id} {raw_text} -> {old_translated_row[1]} No description')
                                 matched = True
                                 break
-                if matched:
-                    continue
+                    if matched:
+                        break
+            if matched:
+                continue
             openai_translate_result = openai_translate(raw_text, raw_description, model)
             if openai_translate_result == "Failed":
                 log_write(f'ERROR: {id} {raw_id} {raw_text} {raw_description} translation failed')
@@ -268,6 +279,7 @@ for id in idlist:
                     openai_translate_discription = openai_translate_result.split('||')[1]
                 new_translated.writerow([raw_id, openai_translate_text, openai_translate_discription])
                 log_write(f'OpenAI translate: {id} {raw_id} {raw_text} {raw_description} -> {openai_translate_text} {openai_translate_discription}')
+                change_write(f'{id} {raw_id} {raw_text} {raw_description} -> {openai_translate_text} {openai_translate_discription}')
     log_write(f'{id} translation done')
 log_write('All translation done')
 
