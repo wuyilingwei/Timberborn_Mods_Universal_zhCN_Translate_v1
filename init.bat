@@ -31,13 +31,13 @@ echo [Init info] Setting up secrets
 echo [Init info] Please enter your Openai API key:
 set /p openai_key=
 echo [Init info] Openai API key set
-echo [Init info] Please enter openai model name:
+echo [Init info] Please enter openai model name:(suggest:gpt-4o-mini)
 set /p model=
 echo [Init info] Openai model set
-echo [Init info] Please enter model prompt token price:
+echo [Init info] Please enter model prompt token price:(gpt-4o-mini:0.00000015)
 set /p prompt_token_price=
 echo [Init info] Token price set
-echo [Init info] Please enter model completion token price:
+echo [Init info] Please enter model completion token price:(gpt-4o-mini:0.0000006)
 set /p completion_token_price=
 echo [Init info] Token price set
 echo [Init info] Please enter your Steam username:

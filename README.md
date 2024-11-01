@@ -20,3 +20,21 @@ For translations and other documentation, the Attribution-NonCommercial-NoDeriva
 For the program, the GNU GENERAL PUBLIC LICENSE applies
 
 CopyRight © 2024 Any rights not expressly granted are reserved
+
+## How to use it
+
+[Download repository](https://github.com/wuyilingwei/Timberborn_Mods_Universal_cnZH_Translate/archive/refs/heads/main.zip)
+
+Make sure you computer install python 3.6+
+
+Run init.bat to install Support libraries and external programs
+
+Follow the init guide setup key and steam auth
+
+open 'ids.txt' put mods to be translated workshop id here
+
+run main.py
+
+check changes.log to review changes
+
+upload mod folder to steam OR copy to mod menu to enjoy your game
