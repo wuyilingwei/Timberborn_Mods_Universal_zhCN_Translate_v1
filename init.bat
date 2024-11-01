@@ -12,7 +12,6 @@ if %errorlevel% neq 0 (
     timeout /t 5 /nobreak >nul
     exit
 )
-
 echo [Init info] Initializate SteamCMD
 mkdir steamcmd >nul 2>&1
 cd steamcmd
@@ -35,6 +34,12 @@ echo [Init info] Openai API key set
 echo [Init info] Please enter openai model name:
 set /p model=
 echo [Init info] Openai model set
+echo [Init info] Please enter model prompt token price:
+set /p prompt_token_price=
+echo [Init info] Token price set
+echo [Init info] Please enter model completion token price:
+set /p completion_token_price=
+echo [Init info] Token price set
 echo [Init info] Please enter your Steam username:
 set /p steam_username=
 echo [Init info] Steam username set
@@ -49,6 +54,8 @@ cd ..
 echo [Openai] > secret.ini
 echo api_key=%openai% >> secret.ini
 echo model=%model% >> secret.ini
+echo prompt_token_price=%prompt_token_price% >> secret.ini
+echo completion_token_price=%completion_token_price% >> secret.ini
 echo . >> secret.ini
 echo [Steam] >> secret.ini
 echo username=%steam_username% >> secret.ini

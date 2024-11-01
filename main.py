@@ -26,11 +26,16 @@ secret.read('secret.ini')
 
 OPENAI_API_KEY  = secret['Openai']['api_key']
 model = secret['Openai']['model']
+prompt_tokens_price = float(secret['Openai']['prompt_tokens_price'])
+completion_tokens_price = float(secret['Openai']['completion_tokens_price'])
 steam_username = secret['Steam']['username']
 log_write('config loaded')
 log_write(f'api_key length: {len(OPENAI_API_KEY)}')
 log_write(f'model: {model}')
 log_write(f'steam_username: {steam_username}')
+
+prompt_tokens = 0
+completion_tokens = 0
 
 # load steamcmd order
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,6 +77,9 @@ log_write(f'translated_dir: {translated_dir}')
 log_write(f'temp_dir: {temp_dir}')
 
 idlist.remove('3346918947')
+
+if os.path.exists(os.path.join(current_dir, "Supports.txt")):
+    os.remove(os.path.join(current_dir, "Supports.txt"))
 if os.path.exists(mod_dir):
     shutil.rmtree(mod_dir)
 shutil.move(os.path.join(steam_workshop_dir, '3346918947'), mod_dir)
@@ -136,9 +144,12 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
     # 发送POST请求
     response = requests.post(BASE_URL, headers=headers, data=json.dumps(data))
 
+    global prompt_tokens, completion_tokens
+    response_data = response.json()
+    prompt_tokens += response_data['usage']['prompt_tokens']
+    completion_tokens += response_data['usage']['completion_tokens']
     # 打印响应结果
     if response.status_code == 200:
-        response_data = response.json()
         openai_result = response_data['choices'][0]['message']['content']
         log_write(f'{content} -> {openai_result}')
         return openai_result
@@ -147,6 +158,16 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
         log_write(response.text)
         return "Failed"
 
+def parse_mod_info(file_path):
+    mod_info = {}
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
+        for line in file:
+            line = line.strip()
+            if "\"Version\"" in line:
+                mod_info['Version'] = line.split(':')[1].strip().strip('",')
+            elif "\"Name\"" in line:
+                mod_info['Name'] = line.split(':')[1].strip().strip('",')
+    return mod_info
 
 for id in idlist:
     # load mod info form manifest.json
@@ -155,11 +176,13 @@ for id in idlist:
     elif os.path.exists(os.path.join(steam_workshop_dir, id, 'mod.json')):
         info_file_path = os.path.join(steam_workshop_dir, id, 'mod.json')
     log_write(f'{id} mod info file: {info_file_path}')
-    mod_info = json.load(open(info_file_path, 'r', encoding='utf-8-sig'))
-    mod_version = mod_info['Version']
+    mod_info = parse_mod_info(info_file_path)
+    mod_version = mod_info.get('Version', 'Unknown')
     log_write(f'{id} mod version: {mod_version}')
-    mod_name = mod_info['Name'].replace(' ', '_')
+    mod_name = mod_info.get('Name', 'Unknown').replace(' ', '_')
     log_write(f'{id} mod name: {mod_name}')
+    with open(current_dir + '/Supports.txt', 'a', encoding='utf-8') as supports:
+        supports.write(f'{mod_name} {mod_version}\n')
 
     # load raw csv
     raw_id_csv_path = os.path.join(raw_csv_dir, f"{id}.csv")
@@ -174,7 +197,7 @@ for id in idlist:
             old_translated = list(csv.reader(old_translated_file))
             if old_translated[1][1] == mod_name and old_translated[1][2] == mod_version:
                 log_write(f'{id} no change, skip')
-                shutil.copy(os.path.join(raw_csv_dir, f"{id}.csv"), os.path.join(translated_dir, f"{id}.csv"))
+                shutil.copy(old_translated_path, os.path.join(translated_dir, f"{id}.csv"))
                 continue
             else:
                 log_write(f'{id} changed, retranslate')
@@ -187,14 +210,14 @@ for id in idlist:
         old_raw = list(csv.reader(old_raw_file))
 
     # load new translated csv
-    new_translated = csv.writer(open(os.path.join(translated_dir, f"{id}.csv"), 'w', newline='', encoding='utf-8'))
     with open(os.path.join(translated_dir, f"{id}.csv"), 'w', newline='', encoding='utf-8') as csvfile:
         new_translated = csv.writer(csvfile)
         new_translated.writerow(['ID', 'Text', 'Description'])
+        new_translated.writerow([f'#workshop{id}', mod_name, mod_version])
         for row in raw:
             if len(row) < 2:
                 continue
-            if row[0] == 'ID':
+            if 'ID' in row[0]:
                 continue
             raw_id = row[0]
             raw_text = row[1]
@@ -208,21 +231,29 @@ for id in idlist:
             matched = False
             if old_available:
                 for old_row in old_raw:
-                    if old_row[0] == 'ID':
+                    if 'ID' in old_row[0]:
                         continue
                     if len(old_row) < 2:
                         continue
                     if old_row[0] == raw_id:
-                        if len(old_row) == 3 and old_row[1] == raw_text and old_row[2] == raw_description:
-                            new_translated.writerow([raw_id, old_row[1], old_row[2]])
-                            log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description}')
-                            matched = True
-                            break
+                        if have_description and len(old_row) == 3 and old_row[1] == raw_text and old_row[2] == raw_description:
+                            for old_translated_row in old_translated:
+                                if old_translated_row[0] == raw_id:
+                                    if len(old_translated_row) < 3:
+                                        new_translated.writerow([raw_id, old_translated_row[1], ""])
+                                        log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description} -> {old_translated_row[1]} No description')
+                                    else:
+                                        new_translated.writerow([raw_id, old_translated_row[1], old_translated_row[2]])
+                                        log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description} -> {old_translated_row[1]} {old_translated_row[2]}')
+                                    matched = True
+                                    break
                         elif old_row[1] == raw_text:
-                            new_translated.writerow([raw_id, old_row[1]])
-                            log_write(f'Matched translated found: {id} {raw_id} {raw_text} No description')
-                            matched = True
-                            break
+                            for old_translated_row in old_translated:
+                                if old_translated_row[0] == raw_id:
+                                    new_translated.writerow([raw_id, old_translated_row[1]])
+                                    log_write(f'Matched translated found: {id} {raw_id} {raw_text} -> {old_translated_row[1]} No description')
+                                matched = True
+                                break
                 if matched:
                     continue
             openai_translate_result = openai_translate(raw_text, raw_description, model)
@@ -236,5 +267,25 @@ for id in idlist:
                 else:
                     openai_translate_discription = openai_translate_result.split('||')[1]
                 new_translated.writerow([raw_id, openai_translate_text, openai_translate_discription])
-                log_write(f'{id} {raw_id} {raw_text} {raw_description} -> {openai_translate_text} {openai_translate_discription}')
+                log_write(f'OpenAI translate: {id} {raw_id} {raw_text} {raw_description} -> {openai_translate_text} {openai_translate_discription}')
     log_write(f'{id} translation done')
+log_write('All translation done')
+
+# merge csv
+log_write('Start merge csv')
+if os.path.exists(main_csv_path):
+    os.remove(main_csv_path)
+with open(main_csv_path, 'w', newline='', encoding='utf-8') as main_csv:
+    writer = csv.writer(main_csv)
+    writer.writerow(['ID', 'Text', 'Description'])
+    for id in idlist:
+        with open(os.path.join(translated_dir, f"{id}.csv"), 'r', encoding='utf-8') as csv_file:
+            reader = csv.reader(csv_file)
+            for row in reader:
+                writer.writerow(row)
+log_write('Merge csv done')
+
+log_write(f'prompt_tokens_Usage: {prompt_tokens} completion_tokens_Usage: {completion_tokens}')
+price = f"{prompt_tokens * prompt_tokens_price + completion_tokens * completion_tokens_price:.9f}"
+log_write("Predict Cost " + price)
+log_write('All done')
