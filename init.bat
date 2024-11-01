@@ -32,6 +32,9 @@ echo [Init info] Setting up secrets
 echo [Init info] Please enter your Openai API key:
 set /p openai_key=
 echo [Init info] Openai API key set
+echo [Init info] Please enter openai model name:
+set /p model=
+echo [Init info] Openai model set
 echo [Init info] Please enter your Steam username:
 set /p steam_username=
 echo [Init info] Steam username set
@@ -45,6 +48,7 @@ steamcmd +login %steam_username% +quit
 cd ..
 echo [Openai] > secret.ini
 echo api_key=%openai% >> secret.ini
+echo model=%model% >> secret.ini
 echo . >> secret.ini
 echo [Steam] >> secret.ini
 echo username=%steam_username% >> secret.ini

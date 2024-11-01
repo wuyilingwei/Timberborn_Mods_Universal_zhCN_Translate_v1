@@ -1,18 +1,19 @@
-import openai
 import configparser
 import os
 import subprocess
 import shutil
-import hashlib
+import requests
 import csv
+import json
 import time
 
 timestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
-log = open(f'{timestamp}.log', 'w', encoding='utf-8')
+
 def log_write(msg: str) -> None:
-    logtimestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
-    print(f'{logtimestamp}: {msg}')
-    log.write(f'{logtimestamp}: {msg}\n')
+    with open(f'{timestamp}.log', 'a', encoding='utf-8') as log:
+        logtimestamp = time.strftime('%Y-%m-%d-%H-%M-%S')
+        print(f'{logtimestamp}: {msg}')
+        log.write(f'{logtimestamp}: {msg}\n')
 
 log_write("Warning: This log file contains sensitive information, please keep it safe.\n")
 
@@ -20,14 +21,15 @@ log_write("Warning: This log file contains sensitive information, please keep it
 secret = configparser.ConfigParser()
 if not os.path.exists('secret.ini'):
     log_write('secret.ini not found')
-    log.close()
     exit(1)
 secret.read('secret.ini')
 
-openai.api_key = secret['Openai']['api_key']
+OPENAI_API_KEY  = secret['Openai']['api_key']
+model = secret['Openai']['model']
 steam_username = secret['Steam']['username']
 log_write('config loaded')
-log_write(f'api_key length: {len(openai.api_key)}')
+log_write(f'api_key length: {len(OPENAI_API_KEY)}')
+log_write(f'model: {model}')
 log_write(f'steam_username: {steam_username}')
 
 # load steamcmd order
@@ -74,6 +76,12 @@ if os.path.exists(mod_dir):
     shutil.rmtree(mod_dir)
 shutil.move(os.path.join(steam_workshop_dir, '3346918947'), mod_dir)
 
+if os.path.exists(temp_dir):
+    shutil.rmtree(temp_dir)
+shutil.copytree(os.path.join(mod_dir, 'Data'), temp_dir)
+shutil.rmtree(os.path.join(mod_dir, 'Data', 'zhCN'))
+os.mkdir(os.path.join(mod_dir, 'Data', 'zhCN'))
+
 for id in idlist:
     if not os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations')):
         log_write(f'ERROR: {id} Localizations dir not found')
@@ -100,6 +108,133 @@ for id in idlist:
     else:
         log_write(f'ERROR: {id} enUS.csv not found, and no matching file found')
 
+def openai_translate(text="Blank placeholder 1", description="Blank placeholder 2", model="gpt-4o-mini"):
+    BASE_URL = "https://api.openai.com/v1/chat/completions"
+    content = text + "||" + description
+
+    # 构建请求头
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
+
+    # 构建请求体
+    data = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a professional, authentic machine translation engine. Translate text to Simplified Chinese, preserving structure, codes, and markup. Separate translations with ||."
+            },
+            {
+                "role": "user",
+                "content": content
+            }
+        ]
+    }
+
+    # 发送POST请求
+    response = requests.post(BASE_URL, headers=headers, data=json.dumps(data))
+
+    # 打印响应结果
+    if response.status_code == 200:
+        response_data = response.json()
+        openai_result = response_data['choices'][0]['message']['content']
+        log_write(f'{content} -> {openai_result}')
+        return openai_result
+    else:
+        log_write(f"Request failed, status code: {response.status_code}")
+        log_write(response.text)
+        return "Failed"
 
 
-log.close()
+for id in idlist:
+    # load mod info form manifest.json
+    if os.path.exists(os.path.join(steam_workshop_dir, id, 'manifest.json')):
+        info_file_path = os.path.join(steam_workshop_dir, id, 'manifest.json')
+    elif os.path.exists(os.path.join(steam_workshop_dir, id, 'mod.json')):
+        info_file_path = os.path.join(steam_workshop_dir, id, 'mod.json')
+    log_write(f'{id} mod info file: {info_file_path}')
+    mod_info = json.load(open(info_file_path, 'r', encoding='utf-8-sig'))
+    mod_version = mod_info['Version']
+    log_write(f'{id} mod version: {mod_version}')
+    mod_name = mod_info['Name'].replace(' ', '_')
+    log_write(f'{id} mod name: {mod_name}')
+
+    # load raw csv
+    raw_id_csv_path = os.path.join(raw_csv_dir, f"{id}.csv")
+    with open(raw_id_csv_path, 'r', encoding='utf-8') as raw_file:
+        raw = list(csv.reader(raw_file))
+
+    # load old translated csv
+    old_translated_path = os.path.join(temp_dir, 'zhCN', f"{id}.csv")
+    if os.path.exists(old_translated_path):
+        old_available = True
+        with open(old_translated_path, 'r', encoding='utf-8') as old_translated_file:
+            old_translated = list(csv.reader(old_translated_file))
+            if old_translated[1][1] == mod_name and old_translated[1][2] == mod_version:
+                log_write(f'{id} no change, skip')
+                shutil.copy(os.path.join(raw_csv_dir, f"{id}.csv"), os.path.join(translated_dir, f"{id}.csv"))
+                continue
+            else:
+                log_write(f'{id} changed, retranslate')
+    else:
+        old_available = False
+
+    # load old raw csv
+    old_raw_csv_path = os.path.join(temp_dir, 'enUS', f"{id}.csv")
+    with open(old_raw_csv_path, 'r', encoding='utf-8') as old_raw_file:
+        old_raw = list(csv.reader(old_raw_file))
+
+    # load new translated csv
+    new_translated = csv.writer(open(os.path.join(translated_dir, f"{id}.csv"), 'w', newline='', encoding='utf-8'))
+    with open(os.path.join(translated_dir, f"{id}.csv"), 'w', newline='', encoding='utf-8') as csvfile:
+        new_translated = csv.writer(csvfile)
+        new_translated.writerow(['ID', 'Text', 'Description'])
+        for row in raw:
+            if len(row) < 2:
+                continue
+            if row[0] == 'ID':
+                continue
+            raw_id = row[0]
+            raw_text = row[1]
+            if len(row) == 3:
+                have_description = True
+                raw_description = row[2]
+            else:
+                have_description = False
+                raw_description = ""
+            log_write(f'dealing with {id}: ID:{raw_id} Text:{raw_text} Discription:{raw_description} {have_description}')
+            matched = False
+            if old_available:
+                for old_row in old_raw:
+                    if old_row[0] == 'ID':
+                        continue
+                    if len(old_row) < 2:
+                        continue
+                    if old_row[0] == raw_id:
+                        if len(old_row) == 3 and old_row[1] == raw_text and old_row[2] == raw_description:
+                            new_translated.writerow([raw_id, old_row[1], old_row[2]])
+                            log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description}')
+                            matched = True
+                            break
+                        elif old_row[1] == raw_text:
+                            new_translated.writerow([raw_id, old_row[1]])
+                            log_write(f'Matched translated found: {id} {raw_id} {raw_text} No description')
+                            matched = True
+                            break
+                if matched:
+                    continue
+            openai_translate_result = openai_translate(raw_text, raw_description, model)
+            if openai_translate_result == "Failed":
+                log_write(f'ERROR: {id} {raw_id} {raw_text} {raw_description} translation failed')
+                new_translated.writerow([raw_id, raw_text, raw_description])
+            else:
+                openai_translate_text = openai_translate_result.split('||')[0]
+                if openai_translate_result.endswith('||'):
+                    openai_translate_discription = ""
+                else:
+                    openai_translate_discription = openai_translate_result.split('||')[1]
+                new_translated.writerow([raw_id, openai_translate_text, openai_translate_discription])
+                log_write(f'{id} {raw_id} {raw_text} {raw_description} -> {openai_translate_text} {openai_translate_discription}')
+    log_write(f'{id} translation done')
