@@ -24,6 +24,12 @@ def change_write(msg: str) -> None:
     with open("changes.log", 'a', encoding='utf-8') as change_log:
         change_log.write(f'{msg}\n')
 
+if os.path.exists('Update.log'):
+    os.remove('Update.log')
+def update_write(msg: str) -> None:
+    with open("Update.log", 'a', encoding='utf-8') as update_log:
+        update_log.write(f'{msg}\n')
+
 log_write("Warning: This log file contains sensitive information, please keep it safe.\n")
 
 # load config from secret.ini
@@ -101,9 +107,6 @@ shutil.rmtree(os.path.join(mod_dir, 'Data', 'zhCN'))
 os.mkdir(os.path.join(mod_dir, 'Data', 'zhCN'))
 
 for id in idlist:
-    if not os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations')):
-        log_write(f'ERROR: {id} Localizations dir not found')
-        continue
     if os.path.exists(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv')):
         shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.csv'), os.path.join(raw_csv_dir, f"{id}.csv"))
         log_write(f'FOUND: {id} enUS.csv found, copied to {id}.csv')
@@ -112,17 +115,35 @@ for id in idlist:
         shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.txt'), os.path.join(raw_csv_dir, f"{id}.csv"))
         log_write(f'FOUND: {id} enUS.txt found, copied to {id}.csv')
         continue
-    # 尝试匹配以en开头的文件，妈的就不能统一命名吗
-    for file in os.listdir(os.path.join(steam_workshop_dir, id, 'Localizations')):
-        if "en" in file and (file.endswith('.csv') or file.endswith('.txt')):
-            # 尝试检查文件头部是否是csv
-            with open(os.path.join(steam_workshop_dir, id, 'Localizations', file), 'r', encoding='utf-8') as f:
-                firstline = f.readline().strip()
-                if 'ID,' in firstline:
-                    shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', file), os.path.join(raw_csv_dir, f"{id}.csv"))
-                    log_write(f'FOUND: {id} not exist class file, {file} matched, copied to {id}.csv')
-                    break
-    else:
+    # 尝试匹配文件，妈的就不能统一命名吗
+    found_file = False
+    # 遍历文件夹结构查找匹配的文件
+    for root, dirs, files in os.walk(os.path.join(steam_workshop_dir, id)):
+        for file in files:
+            if "en" in file and (file.endswith('.csv') or file.endswith('.txt')):
+                # 检查文件头部内容是否符合csv格式
+                with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
+                    firstline = f.readline().strip()
+                    if 'ID,Text,Comment' in firstline:
+                        shutil.copy(os.path.join(root, file), os.path.join(raw_csv_dir, f"{id}.csv"))
+                        log_write(f'FOUND: {id} not exist class file, {file} matched, copied to {id}.csv')
+                        found_file = True
+                        break
+        if found_file:
+            break
+        for file in files:
+            #放宽条件至满足格式要求
+            if file.endswith('.csv') or file.endswith('.txt'):
+                with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
+                    firstline = f.readline().strip()
+                    if 'ID,Text,Comment' in firstline:
+                        shutil.copy(os.path.join(root, file), os.path.join(raw_csv_dir, f"{id}.csv"))
+                        log_write(f'FOUND: {id} not exist en file, {file} matched, copied to {id}.csv')
+                        found_file = True
+                        break
+        if found_file:
+            break
+    if not found_file:
         log_write(f'ERROR: {id} enUS.csv not found, and no matching file found')
 
 def openai_translate(text="Blank placeholder 1", description="Blank placeholder 2", model="gpt-4o-mini"):
@@ -215,6 +236,7 @@ for id in idlist:
             else:
                 log_write(f'{id} changed, retranslate')
                 change_write(f'{id} {mod_name}: {old_translated[1][2]} -> {mod_version}')
+                update_write(f'{mod_name}: {old_translated[1][2]} -> {mod_version}')
     else:
         old_available = False
 
