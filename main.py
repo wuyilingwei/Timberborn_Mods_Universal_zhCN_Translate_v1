@@ -214,6 +214,7 @@ for id in idlist:
                 continue
             else:
                 log_write(f'{id} changed, retranslate')
+                change_write(f'{id} {mod_name}: {old_translated[1][2]} -> {mod_version}')
     else:
         old_available = False
 
@@ -225,7 +226,7 @@ for id in idlist:
     # load new translated csv
     with open(os.path.join(translated_dir, f"{id}.csv"), 'w', newline='', encoding='utf-8') as csvfile:
         new_translated = csv.writer(csvfile)
-        new_translated.writerow(['ID', 'Text', 'Description'])
+        new_translated.writerow(['ID', 'Text', 'Comment'])
         new_translated.writerow([f'#workshop{id}', mod_name, mod_version])
         for row in raw:
             if len(row) < 2:
@@ -240,7 +241,7 @@ for id in idlist:
             else:
                 have_description = False
                 raw_description = ""
-            log_write(f'dealing with {id}: ID:{raw_id} Text:{raw_text} Discription:{raw_description} {have_description}')
+            log_write(f'dealing with {id}: ID:{raw_id} Text:{raw_text} Comment:{raw_description} {have_description}')
             matched = False
             if old_available:
                 for old_row in old_raw:
@@ -254,7 +255,7 @@ for id in idlist:
                                 if old_translated_row[0] == raw_id:
                                     if len(old_translated_row) < 3:
                                         new_translated.writerow([raw_id, old_translated_row[1], ""])
-                                        log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description} -> {old_translated_row[1]} No description')
+                                        log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description} -> {old_translated_row[1]} NoComment')
                                     else:
                                         new_translated.writerow([raw_id, old_translated_row[1], old_translated_row[2]])
                                         log_write(f'Matched translated found: {id} {raw_id} {raw_text} {raw_description} -> {old_translated_row[1]} {old_translated_row[2]}')
@@ -263,8 +264,8 @@ for id in idlist:
                         elif old_row[1] == raw_text:
                             for old_translated_row in old_translated:
                                 if old_translated_row[0] == raw_id:
-                                    new_translated.writerow([raw_id, old_translated_row[1]])
-                                    log_write(f'Matched translated found: {id} {raw_id} {raw_text} -> {old_translated_row[1]} No description')
+                                    new_translated.writerow([raw_id, old_translated_row[1], ""])
+                                    log_write(f'Matched translated found: {id} {raw_id} {raw_text} -> {old_translated_row[1]} NoComment')
                                 matched = True
                                 break
                     if matched:
@@ -297,6 +298,7 @@ with open(main_csv_path, 'w', newline='', encoding='utf-8') as main_csv:
     for id in idlist:
         with open(os.path.join(translated_dir, f"{id}.csv"), 'r', encoding='utf-8') as csv_file:
             reader = csv.reader(csv_file)
+            next(reader)
             for row in reader:
                 writer.writerow(row)
 log_write('Merge csv done')
