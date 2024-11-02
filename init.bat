@@ -53,13 +53,13 @@ steamcmd +login %steam_username% +quit
 cd ..
 echo [Openai] > secret.ini
 echo api_key=%openai% >> secret.ini
+echo api_url=https://api.openai.com/v1/chat/completions >> secret.ini
 echo model=%model% >> secret.ini
 echo prompt_token_price=%prompt_token_price% >> secret.ini
 echo completion_token_price=%completion_token_price% >> secret.ini
 echo . >> secret.ini
 echo [Steam] >> secret.ini
 echo username=%steam_username% >> secret.ini
-echo paasword=NoUsed >> secret.ini
 echo [Init info] Secrets set
 echo [Init info] Never share your secret.ini and steamcmd folder with anyone
 

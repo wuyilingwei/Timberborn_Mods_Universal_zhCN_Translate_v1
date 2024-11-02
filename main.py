@@ -33,7 +33,8 @@ if not os.path.exists('secret.ini'):
     exit(1)
 secret.read('secret.ini')
 
-OPENAI_API_KEY  = secret['Openai']['api_key']
+OPENAI_API_KEY = secret['Openai']['api_key']
+OPENAI_API_URL = secret['Openai']['api_url']
 model = secret['Openai']['model']
 prompt_tokens_price = float(secret['Openai']['prompt_tokens_price'])
 completion_tokens_price = float(secret['Openai']['completion_tokens_price'])
@@ -126,7 +127,6 @@ for id in idlist:
         log_write(f'ERROR: {id} enUS.csv not found, and no matching file found')
 
 def openai_translate(text="Blank placeholder 1", description="Blank placeholder 2", model="gpt-4o-mini"):
-    BASE_URL = "https://api.openai.com/v1/chat/completions"
     content = text + "||" + description
 
     # 构建请求头
@@ -151,7 +151,7 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
     }
 
     # 发送POST请求
-    response = requests.post(BASE_URL, headers=headers, data=json.dumps(data))
+    response = requests.post(OPENAI_API_URL, headers=headers, data=json.dumps(data))
 
     global prompt_tokens, completion_tokens
     response_data = response.json()
