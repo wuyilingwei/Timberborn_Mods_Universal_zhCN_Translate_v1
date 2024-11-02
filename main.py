@@ -294,7 +294,7 @@ if os.path.exists(main_csv_path):
     os.remove(main_csv_path)
 with open(main_csv_path, 'w', newline='', encoding='utf-8') as main_csv:
     writer = csv.writer(main_csv)
-    writer.writerow(['ID', 'Text', 'Description'])
+    writer.writerow(['ID', 'Text', 'Comment'])
     for id in idlist:
         with open(os.path.join(translated_dir, f"{id}.csv"), 'r', encoding='utf-8') as csv_file:
             reader = csv.reader(csv_file)
