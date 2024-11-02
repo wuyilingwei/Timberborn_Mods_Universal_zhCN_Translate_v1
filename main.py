@@ -115,13 +115,12 @@ for id in idlist:
         shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', 'enUS.txt'), os.path.join(raw_csv_dir, f"{id}.csv"))
         log_write(f'FOUND: {id} enUS.txt found, copied to {id}.csv')
         continue
-    # 尝试匹配文件，妈的就不能统一命名吗
+    # match en file
     found_file = False
-    # 遍历文件夹结构查找匹配的文件
     for root, dirs, files in os.walk(os.path.join(steam_workshop_dir, id)):
         for file in files:
             if "en" in file and (file.endswith('.csv') or file.endswith('.txt')):
-                # 检查文件头部内容是否符合csv格式
+                # check header
                 with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
                     firstline = f.readline().strip()
                     if 'ID,Text,Comment' in firstline:
@@ -132,7 +131,7 @@ for id in idlist:
         if found_file:
             break
         for file in files:
-            #放宽条件至满足格式要求
+            # try ti match other language file
             if file.endswith('.csv') or file.endswith('.txt'):
                 with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
                     firstline = f.readline().strip()
@@ -149,13 +148,11 @@ for id in idlist:
 def openai_translate(text="Blank placeholder 1", description="Blank placeholder 2", model="gpt-4o-mini"):
     content = text + "||" + description
 
-    # 构建请求头
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
 
-    # 构建请求体
     data = {
         "model": model,
         "messages": [
@@ -170,7 +167,6 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
         ]
     }
 
-    # 发送POST请求
     response = requests.post(OPENAI_API_URL, headers=headers, data=json.dumps(data))
 
     global prompt_tokens, completion_tokens
@@ -180,7 +176,7 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
         completion_tokens += response_data['usage']['completion_tokens']
     else:
         log_write('No usage data found')
-    # 打印响应结果
+
     if response.status_code == 200:
         openai_result = response_data['choices'][0]['message']['content']
         log_write(f'{content} -> {openai_result}')

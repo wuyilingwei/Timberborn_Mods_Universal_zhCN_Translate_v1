@@ -28,6 +28,8 @@ cls
 
 echo [Init info] Setting up secrets
 
+echo [Init info] Do you want enable Openai Translator? (True/False)
+set /p openai_enable=
 echo [Init info] Please enter your Openai API key:
 set /p openai_key=
 echo [Init info] Openai API key set
