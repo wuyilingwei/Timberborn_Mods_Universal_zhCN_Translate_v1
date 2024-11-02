@@ -35,10 +35,10 @@ echo [Init info] Please enter openai model name:(suggest:gpt-4o-mini)
 set /p model=
 echo [Init info] Openai model set
 echo [Init info] Please enter model prompt token price:(gpt-4o-mini:0.00000015)
-set /p prompt_token_price=
+set /p prompt_tokens_price=
 echo [Init info] Token price set
 echo [Init info] Please enter model completion token price:(gpt-4o-mini:0.0000006)
-set /p completion_token_price=
+set /p completion_tokens_price=
 echo [Init info] Token price set
 echo [Init info] Please enter your Steam username:
 set /p steam_username=
@@ -51,15 +51,15 @@ timeout /t 5 /nobreak >nul
 steamcmd +login %steam_username% +quit
 
 cd ..
-echo [Openai] > secret.ini
-echo api_key=%openai% >> secret.ini
-echo api_url=https://api.openai.com/v1/chat/completions >> secret.ini
-echo model=%model% >> secret.ini
-echo prompt_token_price=%prompt_token_price% >> secret.ini
-echo completion_token_price=%completion_token_price% >> secret.ini
-echo . >> secret.ini
-echo [Steam] >> secret.ini
-echo username=%steam_username% >> secret.ini
+echo [Openai]> secret.ini
+echo api_key=%openai%>> secret.ini
+echo api_url=https://api.openai.com/v1/chat/completions>> secret.ini
+echo model=%model%>> secret.ini
+echo prompt_tokens_price=%prompt_tokens_price%>> secret.ini
+echo completion_tokens_price=%completion_tokens_price%>> secret.ini
+echo.>> secret.ini
+echo [Steam]>> secret.ini
+echo username=%steam_username%>> secret.ini
 echo [Init info] Secrets set
 echo [Init info] Never share your secret.ini and steamcmd folder with anyone
 
