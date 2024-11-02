@@ -33,7 +33,7 @@ A network that can access Steam and OpenAI. For some regions, VPN is necessary.
 
 ### I
 
-[Download repository](https://github.com/wuyilingwei/Timberborn_Mods_Universal_cnZH_Translate/archive/refs/heads/main.zip)
+[Download Code form repository](https://github.com/wuyilingwei/Timberborn_Mods_Universal_cnZH_Translate/archive/refs/heads/main.zip)
 
 Make sure you computer install python 3.8+, and in system path, if you do not have, download [here](https://www.python.org/downloads/)
 
