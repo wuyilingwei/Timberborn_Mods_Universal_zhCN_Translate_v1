@@ -118,7 +118,6 @@ for id in idlist:
             # 尝试检查文件头部是否是csv
             with open(os.path.join(steam_workshop_dir, id, 'Localizations', file), 'r', encoding='utf-8') as f:
                 firstline = f.readline().strip()
-                log_write(f'Debug: CSV style match Test {id} {file} firstline: {firstline}')
                 if 'ID,' in firstline:
                     shutil.copy(os.path.join(steam_workshop_dir, id, 'Localizations', file), os.path.join(raw_csv_dir, f"{id}.csv"))
                     log_write(f'FOUND: {id} not exist class file, {file} matched, copied to {id}.csv')
@@ -155,8 +154,11 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
 
     global prompt_tokens, completion_tokens
     response_data = response.json()
-    prompt_tokens += response_data['usage']['prompt_tokens']
-    completion_tokens += response_data['usage']['completion_tokens']
+    if 'usage' in response_data:
+        prompt_tokens += response_data['usage']['prompt_tokens']
+        completion_tokens += response_data['usage']['completion_tokens']
+    else:
+        log_write('No usage data found')
     # 打印响应结果
     if response.status_code == 200:
         openai_result = response_data['choices'][0]['message']['content']
@@ -164,6 +166,8 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
         return openai_result
     else:
         log_write(f"Request failed, status code: {response.status_code}")
+        log_write(headers)
+        log_write(data)
         log_write(response.text)
         return "Failed"
 

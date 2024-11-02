@@ -52,7 +52,7 @@ steamcmd +login %steam_username% +quit
 
 cd ..
 echo [Openai]> secret.ini
-echo api_key=%openai%>> secret.ini
+echo api_key=%openai_key%>> secret.ini
 echo api_url=https://api.openai.com/v1/chat/completions>> secret.ini
 echo model=%model%>> secret.ini
 echo prompt_tokens_price=%prompt_tokens_price%>> secret.ini
