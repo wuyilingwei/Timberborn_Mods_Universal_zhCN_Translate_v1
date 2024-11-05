@@ -62,3 +62,7 @@ copy mod folder to documents\Timberborn\Mods\\{mod}
 ### V
 
 upload to steam OR enjoy your game.
+
+# END
+
+Our advanced AI-driven translations have completely surpassed old-fashioned human translations (doge)
