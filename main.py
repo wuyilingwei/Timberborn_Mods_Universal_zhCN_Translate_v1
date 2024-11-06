@@ -189,13 +189,13 @@ def openai_translate(text="Blank placeholder 1", description="Blank placeholder 
         return "Failed"
 
 def parse_mod_info(file_path):
-    mod_info = {}
+    mod_info = {"Name": 'Unknown', "Version": 'Unknown'}
     with open(file_path, 'r', encoding='utf-8-sig') as file:
         for line in file:
             line = line.strip()
-            if "\"Version\"" in line:
+            if ("\"Version\"" in line or "\"version\"" in line) and mod_info['Version'] == 'Unknown':
                 mod_info['Version'] = line.split(':')[1].strip().strip('",')
-            elif "\"Name\"" in line:
+            if ("\"Name\"" in line or "\"name\"" in line) and mod_info['Name'] == 'Unknown':
                 mod_info['Name'] = line.split(':')[1].strip().strip('",')
     return mod_info
 
@@ -205,6 +205,28 @@ for id in idlist:
         info_file_path = os.path.join(steam_workshop_dir, id, 'manifest.json')
     elif os.path.exists(os.path.join(steam_workshop_dir, id, 'mod.json')):
         info_file_path = os.path.join(steam_workshop_dir, id, 'mod.json')
+    else:
+        info_file_path_found = False
+        for root, dirs, files in os.walk(os.path.join(steam_workshop_dir, id)):
+            for file in files:
+                if file == 'manifest.json':
+                    info_file_path = os.path.join(root, file)
+                    info_file_path_found = True
+                    break
+                if file == 'mod.json':
+                    info_file_path = os.path.join(root, file)
+                    info_file_path_found = True
+                    break
+            if info_file_path_found:
+                break
+        if not info_file_path_found:
+            log_write(f'ERROR: {id} manifest.json not found')
+            if os.path.exists(os.path.join(steam_workshop_dir, id, 'workshop_data.json')):
+                info_file_path = os.path.join(steam_workshop_dir, id, 'workshop_data.json')
+                log_write(f'{id} No manifest.json found, using workshop_data.json to get Name only')
+            else:
+                log_write(f'ERROR: {id} workshop_data.json not found')
+                info_file_path = "None"
     log_write(f'{id} mod info file: {info_file_path}')
     mod_info = parse_mod_info(info_file_path)
     mod_version = mod_info.get('Version', 'Unknown')

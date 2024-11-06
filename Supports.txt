@@ -50,3 +50,4 @@ Choo!Choo! 0.10.2
 Emberpelts 0.6.0.13
 Find_Idle_Beavers 0.1
 DamDecorations_DecorationExtention 3.0.0
+ExtendedFloodgates 1.0.1
