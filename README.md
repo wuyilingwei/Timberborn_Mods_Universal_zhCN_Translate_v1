@@ -2,7 +2,7 @@
 
 This project provides Chinese support for Timberborn's creative workshop mod.
 
-! IMPORTANT ! The v1 branch has been completely discontinued on 2024/12/31, and is preparing for the reconstruction and development of the v2 version.
+! IMPORTANT ! The v1 branch has been completely discontinued on 2024/12/31, and is preparing for the reconstruction and development of the [v2](https://github.com/wuyilingwei/TMMerger) version.
 
 Translated by Rosmontis Translation Team
 
