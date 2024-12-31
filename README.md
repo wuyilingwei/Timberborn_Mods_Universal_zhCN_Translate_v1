@@ -2,6 +2,8 @@
 
 This project provides Chinese support for Timberborn's creative workshop mod.
 
+! IMPORTANT ! The v1 branch has been completely discontinued on 2024/12/31, and is preparing for the reconstruction and development of the v2 version.
+
 Translated by Rosmontis Translation Team
 
 @武乙凌薇 @Akinare(bilibili:孑然妄想)
@@ -67,4 +69,3 @@ upload to steam OR enjoy your game.
 
 Our advanced AI-driven translations have completely surpassed old-fashioned human translations (doge)
 
-The v1 branch has been completely discontinued on 2024/12/31, and is preparing for the reconstruction and development of the v2 version.
